@@ -46,7 +46,6 @@ var NotificationScreen = {
 
   _notification: null,
   _containerWidth: null,
-  _toasterGD: null,
 
   lockscreenPreview: true,
   silent: false,
@@ -58,16 +57,10 @@ var NotificationScreen = {
       document.getElementById('notification-list');
     this.lockScreenContainer =
       document.getElementById('notifications-lockscreen-container');
-    this.toaster = document.getElementById('notification-toaster');
-    this.toasterIcon = document.getElementById('toaster-icon');
-    this.toasterTitle = document.getElementById('toaster-title');
-    this.toasterDetail = document.getElementById('toaster-detail');
     this.clearAllButton = document.getElementById('notification-clear');
 
-    this._toasterGD = new GestureDetector(this.toaster);
     ['tap', 'mousedown', 'swipe'].forEach(function(evt) {
       this.container.addEventListener(evt, this);
-      this.toaster.addEventListener(evt, this);
     }, this);
 
     this.clearAllButton.addEventListener('click', this.clearAll.bind(this));
@@ -130,19 +123,12 @@ var NotificationScreen = {
         break;
       case 'utilitytrayshow':
         this.updateTimestamps();
-        StatusBar.updateNotificationUnread(false);
         break;
       case 'visibilitychange':
         //update timestamps in lockscreen notifications
         if (!document.hidden) {
           this.updateTimestamps();
         }
-        break;
-      case 'ftuopen':
-        this.toaster.removeEventListener('tap', this);
-        break;
-      case 'ftudone':
-        this.toaster.addEventListener('tap', this);
         break;
     }
   },
@@ -191,28 +177,10 @@ var NotificationScreen = {
     var notification = this._notification;
     this._notification = null;
 
-    var toaster = this.toaster;
     var self = this;
     notification.addEventListener('transitionend', function trListener() {
       notification.removeEventListener('transitionend', trListener);
-
       self.closeNotification(notification);
-
-      if (notification != toaster)
-        return;
-
-      // Putting back the toaster in a clean state for the next notification
-      toaster.style.display = 'none';
-      setTimeout(function nextLoop() {
-        toaster.style.MozTransition = '';
-        toaster.style.MozTransform = '';
-        toaster.classList.remove('displayed');
-        toaster.classList.remove('disappearing');
-
-        setTimeout(function nextLoop() {
-          toaster.style.display = 'block';
-        });
-      });
     });
 
     notification.classList.add('disappearing');
@@ -239,12 +207,6 @@ var NotificationScreen = {
         notificationNode.dataset.obsoleteAPI === 'true') {
       this.removeNotification(notificationId, false);
     }
-
-    if (notificationNode == this.toaster) {
-      this.toaster.classList.remove('displayed');
-    } else {
-      UtilityTray.hide();
-    }
   },
 
   updateTimestamps: function ns_updateTimestamps() {
@@ -266,25 +228,6 @@ var NotificationScreen = {
       date = time.toLocaleFormat();
     }
     return date;
-  },
-
-  updateToaster: function ns_updateToaster(detail, type, dir) {
-    if (detail.icon) {
-      this.toasterIcon.src = detail.icon;
-      this.toasterIcon.hidden = false;
-    } else {
-      this.toasterIcon.hidden = true;
-    }
-
-    this.toaster.dataset.notificationId = detail.id;
-    this.toaster.dataset.type = type;
-    this.toasterTitle.textContent = detail.title;
-    this.toasterTitle.lang = detail.lang;
-    this.toasterTitle.dir = dir;
-
-    this.toasterDetail.textContent = detail.text;
-    this.toasterDetail.lang = detail.lang;
-    this.toasterDetail.dir = dir;
   },
 
   addNotification: function ns_addNotification(detail) {
@@ -380,17 +323,9 @@ var NotificationScreen = {
     var notify = !('noNotify' in detail);
     // Notification toaster
     if (notify) {
-      this.updateToaster(detail, type, dir);
-      if (this.lockscreenPreview || !window.lockScreen ||
-          !window.lockScreen.locked) {
-        this.toaster.classList.add('displayed');
-        this._toasterGD.startDetecting();
-
-        this.toaster.addEventListener('animationend', function onDone() {
-          this.toaster.removeEventListener('animationEnd', onDone);
-          this.toaster.classList.remove('displayed');
-          this._toasterGD.stopDetecting();
-        }.bind(this));
+      NotificationToaster.update(detail, type, dir);
+      if (this.lockscreenPreview || !LockScreen.locked) {
+        NotificationToaster.play();
       }
     }
 
@@ -505,10 +440,9 @@ var NotificationScreen = {
   updateStatusBarIcon: function ns_updateStatusBarIcon(unread) {
     var nbTotalNotif = this.container.children.length +
       this.externalNotificationsCount;
-    StatusBar.updateNotification(nbTotalNotif);
 
-    if (unread)
-      StatusBar.updateNotificationUnread(true);
+    if (unread) {}
+    // TODO: update unread count here
   },
 
   incExternalNotifications: function ns_incExternalNotifications() {

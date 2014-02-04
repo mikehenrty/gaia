@@ -69,7 +69,7 @@ function Clock() {
 
 var StatusBar = {
   /* all elements that are children nodes of the status bar */
-  ELEMENTS: ['notification', 'emergency-cb-notification', 'time', 'connections',
+  ELEMENTS: ['emergency-cb-notification', 'time', 'connections',
     'battery', 'wifi', 'data', 'flight-mode', 'network-activity', 'tethering',
     'alarm', 'bluetooth', 'mute', 'headphones', 'bluetooth-headphones',
     'bluetooth-transferring', 'recording', 'sms', 'geolocation', 'usb', 'label',
@@ -1064,21 +1064,6 @@ var StatusBar = {
       this.clock.stop();
     }
     icon.hidden = !enable;
-  },
-
-  updateNotification: function sb_updateNotification(count) {
-    var icon = this.icons.notification;
-    if (!count) {
-      icon.hidden = true;
-      return;
-    }
-
-    icon.hidden = false;
-    icon.dataset.num = count;
-  },
-
-  updateNotificationUnread: function sb_updateNotificationUnread(unread) {
-    this.icons.notification.dataset.unread = unread;
   },
 
   updateEmergencyCbNotification:
