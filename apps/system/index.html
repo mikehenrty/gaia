@@ -204,6 +204,7 @@
 
     <!-- Notifications -->
     <link rel="stylesheet" type="text/css" href="style/notifications/notifications.css">
+    <script defer src="js/notification_tray.js"></script>
     <script defer src="js/notifications.js"></script>
 
     <!-- Downloads -->
@@ -509,13 +510,6 @@
 
       <!-- Utility Tray -->
       <div id="utility-tray" data-z-index-level="utility-tray">
-        <!-- notifications -->
-        <div id="notification-bar">
-          <span id="notification-some" data-l10n-id="notifications">Notifications</span>
-
-          <button id="notification-clear" data-l10n-id="clear-all" disabled>Clear all</button>
-        </div>
-
         <div id="notifications-container">
           <!-- Update Manager -->
           <div id="update-manager-container" class="fake-notification">
@@ -580,9 +574,6 @@
           <!-- media recording status -->
           <div id="media-recoding-status-list">
           </div>
-
-          <div id="desktop-notifications-container">
-          </div>
         </div>
 
         <!-- credit module -->
@@ -603,6 +594,21 @@
 
         <div id="utility-tray-grippy" role="button">
         </div>
+      </div>
+
+      <div id="notification-toaster" data-z-index-level="notification-toaster">
+        <div id="toaster-nub"></div>
+        <img id="toaster-icon" />
+        <div id="toaster-title"></div>
+        <div id="toaster-detail"></div>
+      </div>
+
+      <div id="notification-tray" data-z-index-level="notification-tray">
+        <div id="notification-bar">
+          <span id="notification-some" data-l10n-id="notifications">Notifications</span>
+          <button id="notification-clear" data-l10n-id="clear-all" disabled>Clear all</button>
+        </div>
+        <div id="notification-list"></div>
       </div>
 
       <div id="windows" data-z-index-level="app">
@@ -1108,12 +1114,6 @@
         </div>
         <div class="timer">
         </div>
-      </div>
-
-      <div id="notification-toaster" data-z-index-level="notification-toaster">
-        <img id="toaster-icon" />
-        <div id="toaster-title"></div>
-        <div id="toaster-detail"></div>
       </div>
 
       <!-- keyboard -->

@@ -41,13 +41,11 @@
 }());
 
 var NotificationScreen = {
-  TOASTER_TIMEOUT: 5000,
   TRANSITION_SPEED: 1.8,
   TRANSITION_FRACTION: 0.30,
 
   _notification: null,
   _containerWidth: null,
-  _toasterTimeout: null,
   _toasterGD: null,
 
   lockscreenPreview: true,
@@ -57,7 +55,7 @@ var NotificationScreen = {
   init: function ns_init() {
     window.addEventListener('mozChromeEvent', this);
     this.container =
-      document.getElementById('desktop-notifications-container');
+      document.getElementById('notification-list');
     this.lockScreenContainer =
       document.getElementById('notifications-lockscreen-container');
     this.toaster = document.getElementById('notification-toaster');
@@ -388,15 +386,11 @@ var NotificationScreen = {
         this.toaster.classList.add('displayed');
         this._toasterGD.startDetecting();
 
-        if (this._toasterTimeout) {
-          clearTimeout(this._toasterTimeout);
-        }
-
-        this._toasterTimeout = setTimeout((function() {
+        this.toaster.addEventListener('animationend', function onDone() {
+          this.toaster.removeEventListener('animationEnd', onDone);
           this.toaster.classList.remove('displayed');
-          this._toasterTimeout = null;
           this._toasterGD.stopDetecting();
-        }).bind(this), this.TOASTER_TIMEOUT);
+        }.bind(this));
       }
     }
 

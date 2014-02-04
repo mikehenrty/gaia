@@ -88,8 +88,12 @@
   z-index: 16384;
 }
 
-/* Level 2: Notification toaster */
+/* Level 2: Notification toaster, Notification tray */
 #screen > [data-z-index-level="notification-toaster"] {
+  z-index: 32768;
+}
+
+#screen > [data-z-index-level="notification-tray"] {
   z-index: 32768;
 }
 
