@@ -1,0 +1,14 @@
+{
+  "extends": "../../../.jshintrc",
+  "predef": [
+    "GestureDetector",
+    "LockScreen",
+    "MediaPlaybackWidget",
+    "NotificationScreen",
+    "NotificationToaster",
+    "NotificationTray",
+    "ScreenManager",
+    "SettingsListener",
+    "SettingsURL"
+  ]
+}
