@@ -159,7 +159,13 @@ html, body {
   background-color: rgba(0, 0, 0, 0.5);
   border-top: 0.1rem #404547 solid;
   border-bottom: 0.1rem black solid;
+  transition: transform 0.3s;
 }
+
+.notification.no-transition {
+  transition: none;
+}
+
 
 .notification:active {
   background-color: rgba(52,140,158, .6);

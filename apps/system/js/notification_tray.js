@@ -8,6 +8,7 @@ var NotificationTray = {
 
   minimumY: 10, // when sliding, do not display less than 50px
   yThreshold: 0.25, // open tray after sliding 20%
+  xThreshold: 0.50, // notification dismiss threshold
 
   screen: document.getElementById('screen'),
   swipeTarget: document.getElementById('bottom-panel'),
@@ -23,7 +24,9 @@ var NotificationTray = {
     this.topBar.addEventListener('touchmove', this);
     this.topBar.addEventListener('touchend', this);
 
-    this.clearAllButton.addEventListener('click', this.clearAll.bind(this));
+    this.clearAllButton.addEventListener('click',
+      this.clearAll.bind(this), true);
+
     window.addEventListener('appforeground', this.handleAppopen.bind(this));
   },
 
@@ -43,10 +46,14 @@ var NotificationTray = {
     }
   },
 
-  clearAll: function() {
-    while (this.container.firstElementChild) {
-      this.closeNotification(this.container.firstElementChild);
-    }
+  clearAll: function(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+
+    do {
+      var cur = this.container.firstElementChild.nextSibling;
+      NotificationScreen.closeNotification(cur);
+    } while (this.container.firstElementChild.nextSibling);
   },
 
   add: function(detail) {
@@ -113,6 +120,15 @@ var NotificationTray = {
       oldNotif.dataset.type = type;
       notificationNode = oldNotif;
     } else {
+      notificationNode.addEventListener('touchstart', function(evt) {
+        this.startNotificationSlide(evt.currentTarget, evt.touches[0].pageX);
+      }.bind(this));
+      notificationNode.addEventListener('touchmove', function(evt) {
+        this.slideNotificationToX(evt.currentTarget, evt.touches[0].pageX);
+      }.bind(this));
+      notificationNode.addEventListener('touchend', function(evt) {
+        this.endNotificationSlide(evt.currentTarget, evt.touches[0].pageX);
+      }.bind(this));
       this.container.insertBefore(notificationNode, this.topBar.nextSibling);
     }
 
@@ -205,19 +221,30 @@ var NotificationTray = {
   },
 
   startNotificationSlide: function(el, x) {
-
+    el._startX = x;
+    el.classList.add('no-transition');
   },
 
   slideNotificationToX: function(el, x) {
-
+    var deltaX = x - el._startX;
+    if (deltaX > 0) {
+      el.style.transform = 'translateX(' + deltaX + 'px)';
+    }
   },
 
-
-  endNotificationSlide: function(el) {
-
+  endNotificationSlide: function(el, x) {
+    el.classList.remove('no-transition');
+    var deltaX = x - el._startX;
+    if (deltaX / el.getBoundingClientRect().width > this.xThreshold) {
+      el.style.transform = 'translateX(100%)';
+      el.addEventListener('transitionend', function onEnd() {
+        el.removeEventListener('transitionend', onEnd);
+        NotificationScreen.closeNotification(el);
+      });
+    } else {
+      el.style.transform = 'translateX(0)';
+    }
   },
-
-
 
   // TODO: Remove this when we ditch mozNotification (bug 952453)
   handleAppopen: function ns_handleAppopen(evt) {
