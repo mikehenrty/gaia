@@ -93,9 +93,6 @@
   z-index: 32768;
 }
 
-#screen > [data-z-index-level="notification-tray"] {
-  z-index: 32768;
-}
 
 /* Level 3: Attention screen */
 #screen > [data-z-index-level="attention-screen"] {
@@ -108,6 +105,10 @@
 }
 
 /* Level 5: Statusbar, Utility-Tray */
+#screen > [data-z-index-level="notification-tray"] {
+  z-index: 4097;
+}
+
 #screen > [data-z-index-level="statusbar"] {
   z-index: 4096;
 }

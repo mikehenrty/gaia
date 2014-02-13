@@ -4,23 +4,42 @@ html, body {
 
 @keyframes toaster {
   0% {
+    opacity: 0;
+    border-radius: 5px;
     width: 20%;
     transform: translateY(5rem);
+    background-color: white;
   }
   10% {
+    border-radius: 5px;
     width: 20%;
-    tranform: translateY(4rem);
+    background-color: white;
+    transform: translateY(4.8rem);
   }
   30% {
-    width: 100%;
-    transform: translateY(4rem);
+    opacity: 1;
+    width: 20%;
+    border-radius: 5px;
+    transform: translateY(4.8rem);
+    background-color: rgb(69, 253, 228);
+  }
+  60% {
+    width: 20%;
+    border-radius: 5px;
+    transform: translateY(4.8rem);
+    background-color: rgb(50, 191, 214);
   }
   70% {
-    transform: translateY(0);
+    transform: translateY(4.8rem);
+    background-color: rgb(69, 253, 228);
+    width: 100%;
+    border-radius: 0;
+  }
+  85% {
+    transform: translateY(-0.3rem);
   }
   100% {
-    width: 100%;
-    transform: translateY(5rem);
+    transform: translateY(0);
   }
 }
 
@@ -28,64 +47,75 @@ html, body {
   position: absolute;
   left: 0;
   right: 0;
+  margin: auto;
   bottom: 0;
   width: 100%;
-  height: 5rem;
-  margin: auto;
-  background-image: url('images/grey-noise-bg.png');
-  overflow: hidden;
-  background-repeat: repeat-x;
-  background-size: auto 100%;
-  -moz-box-sizing: border-box;
-  border-top: 0.1rem #2c2c2c solid;
-  transform: translateY(5rem);
+  height: 5.3rem;
+  background-color: rgb(50, 191, 214);
+  transform: translateY(5.3rem);
   transition: transform .2s;
 }
 
-#notification-toaster.displayed {
+#notification-toaster.toasty {
   animation-name: toaster;
-  animation-duration: 3.5s;
+  animation-duration: 2s;
+}
+
+
+#notification-toaster.displayed {
+  transform: translateY(0rem);
+}
+
+.fadeTitle #toaster-title {
+  opacity: 0;
+}
+
+.showDetail #toaster-detail {
+  transition-delay: .3s;
+  opacity: 1;
 }
 
 #toaster-icon {
   position: absolute;
   width: 3rem;
   height: 3rem;
-  top: 0.7rem;
+  top: 0;
+  bottom: 0;
   left: 1rem;
+  margin: auto;
   pointer-events: none;
 }
 
 #notification-toaster > div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: auto;
   left: 5rem;
   width: calc(100% - 5.5rem);
-  height: 1.9rem;
   padding: 0;
   line-height: 1.9rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: opacity .2s;
 }
 
 #toaster-title {
   pointer-events: none;
-  position: absolute;
-  top: 0.3rem;
-  color: #52b8cc;
-  font-size: 1.5rem;
+  color: white;
+  font-size: 1.7rem;
   font-weight: 500;
+  height: 1.7rem;
 }
 
 #toaster-detail {
   pointer-events: none;
-  position: absolute;
-  top: 2.2rem;
   color: white;
   font-size: 1.4rem;
   font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  height: 1.4rem;
+  opacity: 0;
 }
 
 #notification-tray {
@@ -93,8 +123,8 @@ html, body {
   bottom: calc(-100%);
   width: calc(100%);
   height: calc(100%);
-  background-color: blue;
-  transition: transform .2s;
+  background-color: rgb(50, 191, 214);
+  transition: transform .2s ease-in;
 }
 
 #notification-tray.no-transition {
@@ -103,8 +133,7 @@ html, body {
 
 #notification-bar {
   height: 3rem;
-  background-color: #52b6cc;
-  color: #1b3f46;
+  color: white;
 }
 
 #notification-bar span {
@@ -156,9 +185,9 @@ html, body {
   font-size: 1.4rem;
   font-weight: 400;
   line-height: 1.9rem;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-top: 0.1rem #404547 solid;
-  border-bottom: 0.1rem black solid;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-top: 0.1rem solid rgba(0, 0, 0, 0.15);
+  border-bottom: 0.1rem black rgba(0, 0, 0, 0.15);
   transition: transform 0.3s;
 }
 
@@ -253,6 +282,10 @@ html, body {
 
 #notifications-lockscreen-container .notification {
   background-color: transparent;
+}
+
+#notification-clear {
+  color: white;
 }
 
 @keyframes fn-rotate {

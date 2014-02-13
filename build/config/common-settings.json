@@ -205,7 +205,7 @@
    "wifi.enabled": true,
    "wifi.screen_off_timeout": 600000,
    "wifi.suspended": false,
-   "wifi.disabled_by_wakelock": false,
+   "wifi.disabled_by_wakelock": true,
    "wifi.notification": false,
    "wifi.connect_via_settings": false,
    "wap.push.enabled": true
