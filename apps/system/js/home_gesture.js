@@ -5,6 +5,11 @@ var HomeGesture = {
   _moving: false,
   _multiTouch: false,
   _startY1: 0,
+  _startX1: 0,
+
+  _touchForwarder: null,
+  _shouldForwardTap: false,
+
   // minimum moving distance to home in pixel of screen height
   MINUMUM_DISTANCE: 50,
 
@@ -18,10 +23,13 @@ var HomeGesture = {
     window.addEventListener('software-button-enabled', this);
     window.addEventListener('software-button-disabled', this);
     this.homeBar.addEventListener('touchstart', this, true);
+    this.homeBar.addEventListener('touchmove', this, true);
     this.homeBar.addEventListener('touchend', this, true);
     // This 'click' listener can prevent other element which
     // have click listener steal 'touchstart'.
     this.homeBar.addEventListener('click', this, true);
+
+    this._touchForwarder = new TouchForwarder();
 
     if (!this.hasHardwareHomeButton && isTablet) {
       // enable gesture for tablet without hardware home button
@@ -60,12 +68,21 @@ var HomeGesture = {
     switch (evt.type) {
       case 'touchstart':
         evt.preventDefault();
+
+        var iframe = AppWindowManager.getActiveApp().iframe;
+        this._touchForwarder.destination = iframe;
+        this._shouldForwardTap = true;
+
         this._moving = true;
         this._startY1 = evt.changedTouches[0].pageY;
         if (evt.touches.length > 1) {
           this._multiTouch = true;
         }
         break;
+      case 'touchmove':
+
+        break;
+
       case 'touchend':
         var progress = Math.abs(this._startY1 - evt.changedTouches[0].pageY);
         if (this._moving &&
@@ -75,6 +92,8 @@ var HomeGesture = {
           } else {
             dispatchEvent(new CustomEvent('home'));
           }
+        } else {
+
         }
         this._multiTouch = false;
         this._moving = false;
