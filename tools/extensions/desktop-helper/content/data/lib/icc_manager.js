@@ -1,4 +1,5 @@
 !function() {
+  window._shimDualSim = true;
 
   function debug(str) {
     //dump('mozIccManager: ' + str + '\n');
@@ -96,7 +97,7 @@
   };
 
   if (window._shimDualSim) {
-    iccManager.iccId.push(222);
+    iccManager.iccIds.push(222);
   }
 
   FFOS_RUNTIME.makeNavigatorShim('mozIccManager', iccManager, true);

@@ -759,7 +759,20 @@ var StatusBar = {
           continue;
         }
 
+
+  //mobileDataIconTypes: {
+  //  'lte': '4G', // 4G LTE
+  //  'ehrpd': '4G', // 4G CDMA
+  //  'hspa+': 'H+', // 3.5G HSPA+
+  //  'hsdpa': 'H', 'hsupa': 'H', 'hspa': 'H', // 3.5G HSDPA
+  //  'evdo0': 'Ev', 'evdoa': 'Ev', 'evdob': 'Ev', // 3G CDMA
+  //  'umts': '3G', // 3G
+  //  'edge': 'E', // EDGE
+  //  'gprs': '2G',
+  //  '1xrtt': '1x', 'is95a': '1x', 'is95b': '1x' // 2G CDMA
+  //},
         var type = self.mobileDataIconTypes[data.type];
+        type = '3G';
         icon.hidden = false;
         icon.textContent = '';
         icon.classList.remove('sb-icon-data-circle');

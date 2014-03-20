@@ -171,6 +171,7 @@ body.rb-enabled #statusbar-label {
 #statusbar-connections {
   margin: 0;
   padding: 0;
+  font-family: 'Fira Sans', sans-serif;
 }
 
 #statusbar-connections > * {
@@ -198,7 +199,12 @@ body.rb-enabled #statusbar-label {
 #statusbar-connections[data-multiple="true"] .statusbar-signal::before {
   position: absolute;
   font-size: 0.8rem;
-  top: 0.5rem;
+  color: #00caf2;
+  top: 0rem;
+  left: 0rem;
+}
+
+#statusbar-connections[data-multiple="true"] .statusbar-signal:not([data-level])::before {
   left: -0.6rem;
 }
 
@@ -213,14 +219,6 @@ body.rb-enabled #statusbar-label {
 }
 #statusbar-connections[data-multiple="true"] .statusbar-signal[data-index="4"]::before {
   content: '4';
-}
-
-#statusbar-connections[data-multiple="true"] .statusbar-data {
-  position: relative;
-  width: 1.3rem;
-  margin: 0;
-  font-size: 0.8rem;
-  text-align: right;
 }
 
 #statusbar-connections[data-multiple="true"] .statusbar-data[hidden] {
