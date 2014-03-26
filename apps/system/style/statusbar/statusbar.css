@@ -249,6 +249,7 @@ body.rb-enabled #statusbar-label {
 #statusbar-call-forwardings[data-multiple="true"] .sb-icon-call-forwarding::before {
   position: absolute;
   font-size: 0.8rem;
+  color: #00caf2;
   top: 0.5rem;
   left: -0.6rem;
 }
