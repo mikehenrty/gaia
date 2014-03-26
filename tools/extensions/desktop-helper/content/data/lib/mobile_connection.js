@@ -1,5 +1,4 @@
 !function() {
-  window._shimDualSim = true;
 
   function debug(str) {
     //dump('mozMobileConnection: ' + str + '\n');
