@@ -24,6 +24,7 @@ var ActivityHandler = {
     if (!window.location.hash.length) {
       window.navigator.mozSetMessageHandler('sms-received',
         this.onSmsReceived.bind(this));
+      this.pendingSms = 0;
 
       window.navigator.mozSetMessageHandler('notification',
         this.onNotification.bind(this));
@@ -320,15 +321,22 @@ var ActivityHandler = {
     }
     timeoutID = setTimeout(releaseWakeLock, 30 * 1000);
 
+    this.pendingSms++;
+    dump(' GOT PENDING SMS ' + this.pendingSms + '\n\n');
+
     function onSmsHandlerComplete() {
       releaseWakeLock();
       // If we are in the system message entry point, we close the app upon
-      // completion of handling the sms so that we can open the launch_path
+      // completion of handling all sms so that we can open the launch_path
       // the next time we open open the app or get a notification event.
-      if (ActivityHandler.getEntryPoint() == '/message-sms-received.html') {
+      ActivityHandler.pendingSms--;
+      dump('COMPLETING SMS ' + ActivityHandler.pendingSms + '\n\n');
+      if (ActivityHandler.getEntryPoint() === '/message-sms-received.html' &&
+          ActivityHandler.pendingSms === 0) {
+        dump(' CLOSING \n\n');
         window.close();
       }
-    }
+    };
 
     // The black list includes numbers for which notifications should not
     // progress to the user. Se blackllist.js for more information.
@@ -361,7 +369,7 @@ var ActivityHandler = {
       return;
     }
     if (BlackList.has(message.sender)) {
-      onSmsHandlerComplete();
+      setTimeout(onSmsHandlerComplete);
       return;
     }
 
@@ -402,6 +410,7 @@ var ActivityHandler = {
           // 'mms message' in the field.
           if (needManualRetrieve) {
             setTimeout(function notDownloadedCb() {
+              var str = (navigator.mozL10n.get('notDownloaded-title'));
               callback(navigator.mozL10n.get('notDownloaded-title'));
             });
           }
