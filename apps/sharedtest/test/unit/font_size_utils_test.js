@@ -142,14 +142,21 @@ suite('shared/js/text_utils.js', function() {
     return element;
   }
 
-  /*function getMaxHeaderFontSize() {
+  function getMaxHeaderFontSize() {
     var sizes = FontSizeUtils.getAllowedSizes(setupHeaderElement());
     return sizes[sizes.length - 1];
-  }*/
+  }
 
   function getMinHeaderFontSize() {
     var sizes = FontSizeUtils.getAllowedSizes(setupHeaderElement());
     return sizes[0];
+  }
+
+  function lazyLoad(element) {
+    document.body.appendChild(element);
+    window.dispatchEvent(new CustomEvent('lazy-loaded-html', {
+      detail: element
+    }));
   }
 
   setup(function() {
@@ -433,10 +440,9 @@ suite('shared/js/text_utils.js', function() {
     });
   });
 
-  /*suite('FontSizeUtils auto resize without Mutation Observer', function() {
+  suite('FontSizeUtils auto resize Mutation Observer', function() {
     test('Should auto-resize back up when text changes', function(done) {
       var el = setupHeaderElement();
-      document.body.appendChild(el.parentNode);
       el.textContent = setupLargeString();
 
       // When we get an overflow event, make sure we have auto-resized
@@ -459,8 +465,10 @@ suite('shared/js/text_utils.js', function() {
           done();
         });
       });
+
+      lazyLoad(el.parentNode);
     });
-  });*/
+  });
 
   suite('FontSizeUtils.getContentWidth', function() {
     var el;
@@ -632,34 +640,36 @@ suite('shared/js/text_utils.js', function() {
     });
   });
 
-  //suite('FontSizeUtils handle overflow events', function() {
-  //  test('Header overflow should cause auto-resize', function(done) {
-  //    var el = setupHeaderElement();
-  //    document.body.appendChild(el.parentNode);
-  //    el.textContent = setupLargeString();
+  suite('Lazy-Loading DOM evetns', function() {
+    test('Lazy loaded header should cause reformat', function(done) {
+      var el = setupHeaderElement();
+      el.textContent = setupLargeString();
 
-  //    var stub = sinon.stub(FontSizeUtils, '_reformatHeaderText', function() {
-  //      document.body.removeChild(el.parentNode);
-  //      stub.restore();
-  //      assert.isTrue(stub.calledWith(el));
-  //      done();
-  //    });
-  //  });
+      var stub = sinon.stub(FontSizeUtils, '_reformatHeaderText', function() {
+        document.body.removeChild(el.parentNode);
+        stub.restore();
+        assert.isTrue(stub.calledWith(el));
+        done();
+      });
 
-  //  test('Non-header overflow should not cause auto-resize', function(done) {
-  //    var el = setupNonHeaderElement();
-  //    document.body.appendChild(el.parentNode);
-  //    el.textContent = setupLargeString();
+      lazyLoad(el.parentNode);
+    });
 
-  //    var spy = sinon.spy(FontSizeUtils, '_reformatHeaderText');
-  //    assert.isTrue(spy.notCalled);
+    test('Non-header lazy load should not cause reformat', function(done) {
+      var el = setupNonHeaderElement();
+      el.textContent = setupLargeString();
 
-  //    el.addEventListener('overflow', function() {
-  //      document.body.removeChild(el.parentNode);
-  //      spy.restore();
-  //      assert.isTrue(spy.notCalled);
-  //      done();
-  //    });
-  //  });
-  //});
+      var spy = sinon.spy(FontSizeUtils, '_reformatHeaderText');
+      assert.isTrue(spy.notCalled);
+
+      el.addEventListener('overflow', function() {
+        document.body.removeChild(el.parentNode);
+        spy.restore();
+        assert.isTrue(spy.notCalled);
+        done();
+      });
+
+      lazyLoad(el.parentNode);
+    });
+  });
 });
