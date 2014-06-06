@@ -1,5 +1,5 @@
 /* exported LazyLoader */
-/* globals HtmlImports, FontSizeUtils */
+/* globals HtmlImports */
 'use strict';
 
 /**
@@ -57,11 +57,9 @@ var LazyLoader = (function() {
         }
       }
 
-      // If FontSizeUtils is loaded, we need to resize/recenter the headers
-      // that have been newly inserted inside the DOM.
-      if (FontSizeUtils) {
-        FontSizeUtils.registerHeadersInSubtree(domNode);
-      }
+      window.dispatchEvent(new CustomEvent('lazy-loaded-html', {
+        detail: domNode
+      }));
 
       callback();
     },

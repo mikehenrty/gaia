@@ -324,22 +324,6 @@
     },
 
     /**
-     * Initialize the FontSizeUtils, add overflow handler and perform
-     * auto resize once strings have been localized.
-     */
-    init: function() {
-      // When l10n is ready, register all headers for auto formatting
-      if (navigator.mozL10n) {
-        navigator.mozL10n.once(function() {
-          this.registerHeadersInSubtree(document.body);
-        }.bind(this));
-      } else {
-        // If no l10n, register headers immediately
-        this.registerHeadersInSubtree(document.body);
-      }
-    },
-
-    /**
      * Reformat all the headers located inside a DOM node, and add mutation
      * observer to reformat on any changes.
      *
@@ -354,6 +338,27 @@
           this.reformatHeaderText(header);
           this._resizeOnTextChange(header);
         }.bind(this, headers[i]));
+      }
+    },
+
+    /**
+     * Initialize the FontSizeUtils, add overflow handler and perform
+     * auto resize once strings have been localized.
+     */
+    init: function() {
+      // Listen for lazy loaded DOM, and register for header changes.
+      window.addEventListener('lazy-loaded-html', function(evt) {
+        this.registerHeadersInSubtree(evt.detail);
+      }.bind(this));
+
+      // When l10n is ready, register all headers for auto formatting
+      if (navigator.mozL10n) {
+        navigator.mozL10n.once(function() {
+          this.registerHeadersInSubtree(document.body);
+        }.bind(this));
+      } else {
+        // If no l10n, register headers immediately
+        this.registerHeadersInSubtree(document.body);
       }
     },
 
