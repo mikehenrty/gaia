@@ -71,7 +71,7 @@
      */
     _handleTextChanges: function(mutations) {
       for (var i = 0; i < mutations.length; i++) {
-        this.reformatHeaderText(mutations[i].target);
+        this._reformatHeaderText(mutations[i].target);
       }
     },
 
@@ -93,10 +93,51 @@
      *
      * @param {HTMLElement} element The element to observer for changes
      */
-    _resizeOnTextChange: function(element) {
+    _observeHeaderChanges: function(element) {
       var observer = this._getTextChangeObserver();
       // Listen for any changes in the child nodes of the header.
       observer.observe(element, { childList: true });
+    },
+
+    /**
+     * Resize and reposition the header text based on string length and
+     * container position.
+     *
+     * @param {HTMLElement} header h1 text inside header to reformat.
+     */
+    _reformatHeaderText: function(header) {
+      // Skip resize logic if header has no content, ie before localization.
+      if (header.textContent.trim() === '') {
+        return;
+      }
+
+      // Reset our centering styles.
+      this.resetCentering(header);
+
+      // Cache the element style properites to avoid reflows.
+      var style = this.getStyleProperties(header);
+
+      // Perform auto-resize and center.
+      style.textWidth = this.autoResizeElement(header, style);
+      this.centerTextToScreen(header, style);
+    },
+
+    /**
+     * Reformat all the headers located inside a DOM node, and add mutation
+     * observer to reformat when any changes are made.
+     *
+     * @param {HTMLElement} domNode
+     */
+    _registerHeadersInSubtree: function(domNode) {
+      var headers = domNode.querySelectorAll('header > h1');
+      for (var i = 0; i < headers.length; i++) {
+        // On some apps wrapping inside a requestAnimationFrame reduces the
+        // number of calls to _reformatHeaderText().
+        window.requestAnimationFrame(function(header) {
+          this._reformatHeaderText(header);
+          this._observeHeaderChanges(header);
+        }.bind(this, headers[i]));
+      }
     },
 
     /**
@@ -251,29 +292,6 @@
     },
 
     /**
-     * Resize and reposition the header text based on string length and
-     * container position.
-     *
-     * @param {HTMLElement} header h1 text inside header to reformat.
-     */
-    reformatHeaderText: function(header) {
-      // Skip resize logic if header has no content, ie before localization.
-      if (header.textContent.trim() === '') {
-        return;
-      }
-
-      // Reset our centering styles.
-      this.resetCentering(header);
-
-      // Cache the element style properites to avoid reflows.
-      var style = this.getStyleProperties(header);
-
-      // Perform auto-resize and center.
-      style.textWidth = this.autoResizeElement(header, style);
-      this.centerTextToScreen(header, style);
-    },
-
-    /**
      * Center an elements text based on screen position rather than container.
      *
      * @param {HTMLElement} element The element whose text we want to center.
@@ -301,8 +319,8 @@
       // is the same as the space to the right, so take the largst of the two.
       var margin = Math.max(sideSpaceLeft, sideSpaceRight);
 
-      // If the minimum amount of space our header needs, plus the margins can
-      // still fit inside the width of the window, we can center this header.
+      // If the minimum amount of space our header needs plus the max margins
+      // fits inside the width of the window, we can center this header.
       if (minHeaderWidth + (margin * 2) <= this.getWindowWidth()) {
         element.style.marginLeft = element.style.marginRight = margin + 'px';
       }
@@ -319,25 +337,7 @@
       // performance optimization we will avoid the overhead of any
       // additional function call by doing this check inline.
       if (element.tagName === 'H1' && element.parentNode.tagName === 'HEADER') {
-        this.reformatHeaderText(element);
-      }
-    },
-
-    /**
-     * Reformat all the headers located inside a DOM node, and add mutation
-     * observer to reformat on any changes.
-     *
-     * @param {HTMLElement} domNode
-     */
-    registerHeadersInSubtree: function(domNode) {
-      var headers = domNode.querySelectorAll('header > h1');
-      for (var i = 0; i < headers.length; i++) {
-        // On some apps wrapping inside a requestAnimationFrame reduces the
-        // number of calls to reformatHeaderText().
-        window.requestAnimationFrame(function(header) {
-          this.reformatHeaderText(header);
-          this._resizeOnTextChange(header);
-        }.bind(this, headers[i]));
+        this._reformatHeaderText(element);
       }
     },
 
@@ -346,19 +346,21 @@
      * auto resize once strings have been localized.
      */
     init: function() {
-      // Listen for lazy loaded DOM, and register for header changes.
+      // Listen for lazy loaded DOM to register new headers.
       window.addEventListener('lazy-loaded-html', function(evt) {
-        this.registerHeadersInSubtree(evt.detail);
+        this._registerHeadersInSubtree(evt.detail);
       }.bind(this));
 
-      // When l10n is ready, register all headers for auto formatting
       if (navigator.mozL10n) {
+        // When l10n is ready, register all headers for auto formatting
         navigator.mozL10n.once(function() {
-          this.registerHeadersInSubtree(document.body);
+          this._registerHeadersInSubtree(document.body);
         }.bind(this));
       } else {
-        // If no l10n, register headers immediately
-        this.registerHeadersInSubtree(document.body);
+        // If no l10n, register headers on DOMContentLoaded.
+        window.addEventListener('DOMContentLoaded', function() {
+          this._registerHeadersInSubtree(document.body);
+        }.bind(this));
       }
     },
 

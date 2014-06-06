@@ -515,7 +515,7 @@ suite('shared/js/text_utils.js', function() {
       el.textContent = setupSmallString(fontSizeBefore);
       document.body.appendChild(el.parentNode);
 
-      FontSizeUtils.reformatHeaderText(el);
+      FontSizeUtils._reformatHeaderText(el);
 
       var margin = Math.max(leftButtonWidth, rightButtonWidth);
       assert.equal(parseInt(el.style.marginLeft, 10), margin);
@@ -532,7 +532,7 @@ suite('shared/js/text_utils.js', function() {
       el.textContent = setupMediumString(parseInt(fontSizeBefore));
       document.body.appendChild(el.parentNode);
 
-      FontSizeUtils.reformatHeaderText(el);
+      FontSizeUtils._reformatHeaderText(el);
 
       assert.equal(parseInt(el.style.marginLeft, 10), 0);
       assert.equal(parseInt(el.style.marginRight, 10), 0);
@@ -548,7 +548,7 @@ suite('shared/js/text_utils.js', function() {
       el.textContent = setupMediumPlusString(parseInt(fontSizeBefore));
       document.body.appendChild(el.parentNode);
 
-      FontSizeUtils.reformatHeaderText(el);
+      FontSizeUtils._reformatHeaderText(el);
 
       assert.equal(parseInt(el.style.marginLeft, 10), 0);
       assert.equal(parseInt(el.style.marginRight, 10), 0);
@@ -564,7 +564,7 @@ suite('shared/js/text_utils.js', function() {
       el.textContent = setupLargeString(parseInt(fontSizeBefore));
       document.body.appendChild(el.parentNode);
 
-      FontSizeUtils.reformatHeaderText(el);
+      FontSizeUtils._reformatHeaderText(el);
 
       assert.equal(parseInt(el.style.marginLeft, 10), 0);
       assert.equal(parseInt(el.style.marginRight, 10), 0);
@@ -580,7 +580,7 @@ suite('shared/js/text_utils.js', function() {
       el.textContent = setupSmallString(fontSizeBefore);
       document.body.appendChild(el.parentNode);
 
-      FontSizeUtils.reformatHeaderText(el);
+      FontSizeUtils._reformatHeaderText(el);
 
       // Clean up.
       document.body.removeChild(el.parentNode);
@@ -593,7 +593,7 @@ suite('shared/js/text_utils.js', function() {
       el.textContent = setupMediumString(parseInt(fontSizeBefore));
       document.body.appendChild(el.parentNode);
 
-      FontSizeUtils.reformatHeaderText(el);
+      FontSizeUtils._reformatHeaderText(el);
 
       // Clean up.
       document.body.removeChild(el.parentNode);
@@ -638,7 +638,7 @@ suite('shared/js/text_utils.js', function() {
   //    document.body.appendChild(el.parentNode);
   //    el.textContent = setupLargeString();
 
-  //    var stub = sinon.stub(FontSizeUtils, 'reformatHeaderText', function() {
+  //    var stub = sinon.stub(FontSizeUtils, '_reformatHeaderText', function() {
   //      document.body.removeChild(el.parentNode);
   //      stub.restore();
   //      assert.isTrue(stub.calledWith(el));
@@ -651,7 +651,7 @@ suite('shared/js/text_utils.js', function() {
   //    document.body.appendChild(el.parentNode);
   //    el.textContent = setupLargeString();
 
-  //    var spy = sinon.spy(FontSizeUtils, 'reformatHeaderText');
+  //    var spy = sinon.spy(FontSizeUtils, '_reformatHeaderText');
   //    assert.isTrue(spy.notCalled);
 
   //    el.addEventListener('overflow', function() {
