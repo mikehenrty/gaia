@@ -1,5 +1,5 @@
 /* global KeyboardManager, softwareButtonManager, System,
-          AppWindowManager */
+          AppWindowManager, Statusbar, SimPinDialog */
 'use strict';
 
 (function(exports) {
@@ -136,7 +136,9 @@
           // If the software button is enabled it will be un-hidden when
           // the lockscreen is closed and trigger a system level resize.
           if (softwareButtonManager.enabled) {
-            this.publish('system-resize');
+            SimPinDialog.simPinSystemDialog.containerElement.style.height =
+              (this.height - Statusbar.height) + 'px';
+            //this.publish('system-resize');
           }
           break;
         default:
