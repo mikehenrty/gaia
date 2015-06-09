@@ -1,3 +1,4 @@
+dev_apps/acl-daemon
 apps/*
 outoftree_apps/*
 dev_apps/marketplace-dev.allizom.org
@@ -35,4 +36,3 @@ dev_apps/demo-hci-event
 dev_apps/test-l10n-optimize
 dev_apps/theme-test-1
 dev_apps/theme-test-2
-dev_apps/acl-daemon

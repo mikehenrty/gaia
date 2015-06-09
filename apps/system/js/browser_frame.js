@@ -88,10 +88,10 @@
 
   function setMozAppType(iframe, config) {
     // XXX: Those urls needs to be built dynamically.
-    if (config.url && (config.url.startsWith(window.location.protocol +
+    if (config.url.startsWith(window.location.protocol +
                               '//callscreen.gaiamobile.org') ||
         config.url.startsWith(window.location.protocol +
-                              '//clock.gaiamobile.org'))) {
+                              '//clock.gaiamobile.org')) {
       iframe.setAttribute('mozapptype', 'critical');
     } else if (config.isHomescreen) {
       /* If this frame corresponds to the homescreen, set mozapptype=homescreen
