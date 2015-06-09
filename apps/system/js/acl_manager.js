@@ -72,16 +72,26 @@
     switch (action) {
       case 'launch':
         var app = applications.getByOrigin(origin);
-        // var config = new BrowserConfigHelper({
-        // });
-        // appWindowFactory.launch(config);
         window.dispatchEvent(new CustomEvent('webapps-launch', {
           detail: {
             manifestURL: app.manifestURL,
             url: app.origin + app.manifest.launch_path,
             timestamp: Date.now()
           }
+        }));
+        break;
+
+      case 'notify':
+        var n = new Notification(msg.title, {
+          body: msg.body
         });
+        n.onclick = function() {
+          // TODO: send message back
+        };
+        break;
+
+      case 'minimize':
+        window.dispatchEvent(new CustomEvent('home'));
         break;
 
        default:

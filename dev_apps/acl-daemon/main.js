@@ -9,15 +9,16 @@ window.onerror = function(e) {
 function App() {
   this.logContainer = document.getElementById('log');
   this.server = null;
-  this.sockets = null;
+  this.socket = null;
 
-  this.launchButton = document.getElementById('launch');
-  this.launchButton.onclick = this.launchApp.bind(this);
+  document.getElementById('launch').onclick = this.launchApp.bind(this);
+  document.getElementById('notify').onclick = this.sendNotification.bind(this);
+  document.getElementById('minimize').onclick = this.minimizeApp.bind(this);
 }
 
 App.prototype.log = function(msg) {
   var log = document.createElement('p');
-  log.textContent = '[' + new Date().toUTCString() + ']' + msg;
+  log.innerHTML = '[' + new Date().toUTCString() + ']<br />' + msg;
   this.logContainer.insertBefore(log, this.logContainer.firstChild);
 };
 
@@ -48,15 +49,46 @@ App.prototype.handleData = function(evt) {
   this.log('Got data: ' + evt);
 };
 
-App.prototype.getMessage = function(obj) {
+App.prototype.serializeMessage = function(obj) {
   return JSON.stringify(obj) + '\n';
 };
 
 App.prototype.launchApp = function() {
-  this.socket.send(JSON.stringify({
+  if (!this.socket) {
+    this.log('Cannot launch app, no connection');
+    return;
+  }
+  var msg = this.serializeMessage({
     'action': 'launch',
     'origin': 'app://email.gaiamobile.org'
-  }) + '\n');
+  });
+  this.socket.send(msg);
+};
+
+App.prototype.sendNotification = function() {
+  if (!this.socket) {
+    this.log('Cannot send notification, no connection');
+    return;
+  }
+  var msg = this.serializeMessage({
+    'action': 'notify',
+    'origin': 'app://email.gaiamobile.org',
+    'title': 'This is a notification!',
+    'body': 'yaaaaaaaaaay'
+  });
+  this.socket.send(msg);
+};
+
+App.prototype.minimizeApp = function() {
+  if (!this.socket) {
+    this.log('Cannot minimize, no connection');
+    return;
+  }
+  var msg = this.serializeMessage({
+    'action': 'minimize',
+    'origin': 'app://acl-daemon.gaiamobile.org'
+  });
+  this.socket.send(msg);
 };
 
 window.addEventListener('DOMContentLoaded', function() {
