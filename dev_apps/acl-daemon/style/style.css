@@ -1,0 +1,13 @@
+body {
+    background-color:black;
+}
+
+#log {
+  border: 1px solid green;
+  color: green;
+}
+
+button {
+  display: inline-block;
+  height: 50px;
+}
