@@ -91,6 +91,7 @@
         break;
 
       case 'minimize':
+        // TODO: make sure msg.origin is the running app
         window.dispatchEvent(new CustomEvent('home'));
         break;
 
