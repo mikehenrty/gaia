@@ -2,6 +2,8 @@
 
 var PORT = 33334;
 
+var NOTIFICATION_ID = 'some-random-guuid-type-string';
+
 window.onerror = function(e) {
   document.write('Global ERROR: ' + e);
 };
@@ -10,9 +12,12 @@ function App() {
   this.logContainer = document.getElementById('log');
   this.server = null;
   this.socket = null;
+  this.buffer = '';
 
   document.getElementById('launch').onclick = this.launchApp.bind(this);
   document.getElementById('notify').onclick = this.sendNotification.bind(this);
+  document.getElementById('notify-remove').onclick =
+    this.removeNotifications.bind(this);
   document.getElementById('minimize').onclick = this.minimizeApp.bind(this);
 }
 
@@ -46,7 +51,33 @@ App.prototype.handleConnect = function(socket) {
 };
 
 App.prototype.handleData = function(evt) {
-  this.log('Got data: ' + evt);
+  var data = evt.data;
+  this.buffer += data;
+  var i = this.buffer.indexOf('\n');
+  while (i !== -1) {
+    var msg = this.buffer.slice(0, i);
+    this.buffer = this.buffer.slice(i + 1);
+    this.handleMessage(msg);
+    i = this.buffer.indexOf('\n');
+  }
+};
+
+App.prototype.handleMessage = function(msg) {
+  try {
+    msg = JSON.parse(msg);
+  } catch (e) {
+    this.log('Unable to parse incoming msg ' + msg);
+    return;
+  }
+
+  switch (msg.action) {
+    case 'notify-click':
+      alert('Got click for: ' + msg.id);
+      break;
+
+    default:
+      this.log('Unrecognized action: ' + msg.action);
+  }
 };
 
 App.prototype.serializeMessage = function(obj) {
@@ -71,10 +102,23 @@ App.prototype.sendNotification = function() {
     return;
   }
   var msg = this.serializeMessage({
+    'id': NOTIFICATION_ID,
     'action': 'notify',
     'origin': 'app://email.gaiamobile.org',
     'title': 'This is a notification!',
-    'body': 'yaaaaaaaaaay'
+    'body': (new Date()).toUTCString()
+  });
+  this.socket.send(msg);
+};
+
+App.prototype.removeNotifications = function() {
+  if (!this.socket) {
+    this.log('Cannot remove notificaiton, no connection');
+  }
+  var msg = this.serializeMessage({
+    'id': NOTIFICATION_ID,
+    'origin': 'app://email.gaiamobile.org',
+    'action': 'notify-remove'
   });
   this.socket.send(msg);
 };

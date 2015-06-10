@@ -6,18 +6,22 @@
   var PORT = 33334;
   var RETRY_TIMEOUT = 1000;
   var SETTINGS_KEY = 'acl.enabled';
+  var NOTIFICATION_PREFIX = 'ACL_NOTIFICATION';
 
   function debug(msg) {
     dump('[ACL] ' +
       Array.prototype.slice.call(arguments).join(', ') + '\n');
   }
 
+  function getRandomString() {
+    return Math.random().toString(36).replace(/[^a-z]+/g, '');
+  }
+
   var ACLManager = function() {
     this.socket = null;
     this.buffer = '';
+    this.notifications = [];
   };
-
-  ACLManager.prototype.debug = debug;
 
   ACLManager.prototype.start = function() {
     var req = navigator.mozSettings.createLock().get(SETTINGS_KEY);
@@ -63,6 +67,8 @@
 
   ACLManager.prototype.handleClose = function(evt) {
     debug('Closed connections: ' + evt.type);
+    this.socket = null;
+    setTimeout(this.openConnection.bind(this), RETRY_TIMEOUT);
   };
 
   ACLManager.prototype.handleData = function(evt) {
@@ -75,6 +81,17 @@
       this.handleMessage(msg);
       i = this.buffer.indexOf('\n');
     }
+  };
+
+  ACLManager.prototype.serializeMessage = function(obj) {
+    return JSON.stringify(obj) + '\n';
+  };
+
+  ACLManager.prototype.sendMessage = function(msg) {
+    if (!this.socket) {
+      debug('Cannot send message, no connection', msg);
+    }
+    this.socket.send(this.serializeMessage(msg));
   };
 
   ACLManager.prototype.getAppFromMessage = function(msg) {
@@ -110,32 +127,73 @@
 
     switch (msg.action) {
       case 'launch':
-        window.dispatchEvent(new CustomEvent('webapps-launch', {
-          detail: {
-            manifestURL: app.manifestURL,
-            url: app.origin + app.manifest.launch_path,
-            timestamp: Date.now()
-          }
-        }));
-        break;
-
-      case 'notify':
-        var n = new Notification(msg.title, {
-          body: msg.body
-        });
-        n.onclick = function() {
-          // TODO: send message back
-        };
+        this.launchApp(app);
         break;
 
       case 'minimize':
         // TODO: make sure msg.origin is the running app
-        window.dispatchEvent(new CustomEvent('home'));
+        this.minimizeApp(app);
+        break;
+
+      case 'notify':
+        this.sendNotification(msg);
+        break;
+
+      case 'notify-remove':
+        this.removeNotification(msg.id);
         break;
 
        default:
         debug('unrecognized action', msg.action);
         break;
+    }
+  };
+
+  ACLManager.prototype.launchApp = function(app) {
+    window.dispatchEvent(new CustomEvent('webapps-launch', {
+      detail: {
+        manifestURL: app.manifestURL,
+        url: app.origin + app.manifest.launch_path,
+        timestamp: Date.now()
+      }
+    }));
+  };
+
+  ACLManager.prototype.minimizeApp = function(app) {
+    // TODO: check that current foreground app is passed in app
+    window.dispatchEvent(new CustomEvent('home'));
+  };
+
+  ACLManager.prototype.sendNotification = function(detail) {
+    if (!detail.id) {
+      debug('No id received with notification, cannot fire click callback');
+      detail.id = getRandomString() + Date.now();
+    }
+
+    // TODO: how can we do silent on 2.1?
+    var n = new Notification(detail.title, {
+      body: detail.body,
+      icon: detail.icon,
+      tag: NOTIFICATION_PREFIX + detail.id
+    });
+
+    n.onclick = function() {
+      this.sendMessage({
+        action: 'notify-click',
+        id: detail.id,
+        origin: detail.origin
+      });
+    }.bind(this);
+
+    this.notifications[detail.id] = n;
+  };
+
+  ACLManager.prototype.removeNotification = function(id) {
+    if (!id || !this.notifications[id]) {
+      debug('Unable to find notification for removal', id);
+    } else {
+      this.notifications[id].close();
+      delete this.notifications[id];
     }
   };
 
