@@ -1,3 +1,4 @@
+/* global dump, applications*/
 'use strict';
 
 (function(exports) {
@@ -14,7 +15,7 @@
   var ACLManager = function() {
     this.socket = null;
     this.buffer = '';
-  }
+  };
 
   ACLManager.prototype.debug = debug;
 
@@ -71,19 +72,44 @@
     while (i !== -1) {
       var msg = this.buffer.slice(0, i);
       this.buffer = this.buffer.slice(i + 1);
-      this.handleMessage(JSON.parse(msg));
+      this.handleMessage(msg);
       i = this.buffer.indexOf('\n');
     }
   };
 
-  ACLManager.prototype.handleMessage = function(msg) {
-    var action = msg.action;
-    var origin = msg.origin;
+  ACLManager.prototype.getAppFromMessage = function(msg) {
+    var app = null;
+    if (msg.manifestURL) {
+      app = applications.getByManifestURL(msg.manifestURL);
+    }
+    if (!app && msg.origin) {
+      app = applications.getByOrigin(msg.origin);
+    }
+    if (!app) {
+      debug('Unable to fetch app from message');
+    }
+    return app;
+  };
 
-    debug('processing message', action, origin);
-    switch (action) {
+
+  ACLManager.prototype.handleMessage = function(msg) {
+    debug('processing message', msg);
+
+    try {
+      msg = JSON.parse(msg);
+    } catch (e) {
+      console.log('ACL: Unable to deserialize message');
+      return;
+    }
+
+    var app = this.getAppFromMessage(msg);
+    if (!app) {
+      console.log('ACL: Unable to fetch app from message');
+      return;
+    }
+
+    switch (msg.action) {
       case 'launch':
-        var app = applications.getByOrigin(origin);
         window.dispatchEvent(new CustomEvent('webapps-launch', {
           detail: {
             manifestURL: app.manifestURL,
@@ -108,7 +134,7 @@
         break;
 
        default:
-        debug('unrecognized action', action);
+        debug('unrecognized action', msg.action);
         break;
     }
   };
