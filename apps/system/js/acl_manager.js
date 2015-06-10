@@ -4,6 +4,7 @@
   var HOST = '127.0.0.1';
   var PORT = 33334;
   var RETRY_TIMEOUT = 1000;
+  var SETTINGS_KEY = 'acl.enabled';
 
   function debug(msg) {
     dump('[ACL] ' +
@@ -18,7 +19,18 @@
   ACLManager.prototype.debug = debug;
 
   ACLManager.prototype.start = function() {
-    this.openConnection();
+    var req = navigator.mozSettings.createLock().get(SETTINGS_KEY);
+    req.onsuccess = function() {
+      if (req.result[SETTINGS_KEY] === true) {
+        debug('starting ACL');
+        this.openConnection();
+      } else {
+        debug('ACL setting disabled');
+      }
+    }.bind(this);
+    req.onerror = function(e) {
+      debug('Unable to fecth acl settings', e);
+    };
   };
 
   ACLManager.prototype.openConnection = function() {
