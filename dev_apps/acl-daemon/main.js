@@ -2,28 +2,35 @@
 
 var PORT = 33334;
 
-var NOTIFICATION_ID = 'some-random-guuid-type-string';
-
 window.onerror = function(e) {
   document.write('Global ERROR: ' + e);
 };
+
+function $(el) {
+  return document.getElementById(el);
+}
+
+function getRandomString() {
+  return Math.random().toString(36).replace(/[^a-z]+/g, '');
+}
 
 function App() {
   this.logContainer = document.getElementById('log');
   this.server = null;
   this.socket = null;
   this.buffer = '';
+  this.notifications = [];
 
-  document.getElementById('launch').onclick = this.launchApp.bind(this);
-  document.getElementById('notify').onclick = this.sendNotification.bind(this);
-  document.getElementById('notify-remove').onclick =
-    this.removeNotifications.bind(this);
-  document.getElementById('minimize').onclick = this.minimizeApp.bind(this);
+  $('launch').onclick = this.launchApp.bind(this);
+  $('minimize').onclick = this.minimizeApp.bind(this);
+  $('notify').onclick = this.sendNotification.bind(this);
+  $('notify-remove').onclick = this.removeNotifications.bind(this);
+  $('notify-silent').onclick = this.silentNotification.bind(this);
 }
 
 App.prototype.log = function(msg) {
   var log = document.createElement('p');
-  log.innerHTML = '[' + new Date().toUTCString() + ']<br />' + msg;
+  log.textContent = msg;
   this.logContainer.insertBefore(log, this.logContainer.firstChild);
 };
 
@@ -45,7 +52,7 @@ App.prototype.createServer = function() {
 };
 
 App.prototype.handleConnect = function(socket) {
-  this.log('Got incoming connection!');
+  this.log('Connected to System App');
   this.socket = socket;
   this.socket.ondata = this.handleData.bind(this);
 };
@@ -72,6 +79,7 @@ App.prototype.handleMessage = function(msg) {
 
   switch (msg.action) {
     case 'notify-click':
+      this.log('Got click event');
       alert('Got click for: ' + msg.id);
       break;
 
@@ -89,6 +97,7 @@ App.prototype.launchApp = function() {
     this.log('Cannot launch app, no connection');
     return;
   }
+  this.log('Launching email');
   var msg = this.serializeMessage({
     'action': 'launch',
     'origin': 'app://email.gaiamobile.org'
@@ -101,8 +110,11 @@ App.prototype.sendNotification = function() {
     this.log('Cannot send notification, no connection');
     return;
   }
+  this.log('Sending notification');
+  var id = getRandomString();
+  this.notifications.push(id);
   var msg = this.serializeMessage({
-    'id': NOTIFICATION_ID,
+    'id': id,
     'action': 'notify',
     'origin': 'app://email.gaiamobile.org',
     'title': 'This is a notification!',
@@ -115,10 +127,29 @@ App.prototype.removeNotifications = function() {
   if (!this.socket) {
     this.log('Cannot remove notificaiton, no connection');
   }
+  this.log('Removing notification');
+  var id = this.notifications.pop();
   var msg = this.serializeMessage({
-    'id': NOTIFICATION_ID,
+    'id': id,
     'origin': 'app://email.gaiamobile.org',
     'action': 'notify-remove'
+  });
+  this.socket.send(msg);
+};
+
+App.prototype.silentNotification = function() {
+  if (!this.socket) {
+    this.log('Cannot send silent notification, no connection');
+  }
+  this.log('Sending silent notification');
+  var id = getRandomString();
+  this.notifications.push(id);
+  var msg = this.serializeMessage({
+    'id': id,
+    'origin': 'app://email.gaiamobile.org',
+    'action': 'notify',
+    'title': 'SHHHHHHH!!!',
+    'silent': true
   });
   this.socket.send(msg);
 };
@@ -128,6 +159,7 @@ App.prototype.minimizeApp = function() {
     this.log('Cannot minimize, no connection');
     return;
   }
+  this.log('Minimizing current app');
   var msg = this.serializeMessage({
     'action': 'minimize',
     'origin': 'app://acl-daemon.gaiamobile.org'

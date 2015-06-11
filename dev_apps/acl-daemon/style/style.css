@@ -1,14 +1,19 @@
 body {
-    background-color:black;
-}
-
-#log {
-  border: 1px solid green;
-  color: green;
+  background-color: black;
   font-family: "Lucida Console", Monaco, monospace;
-  padding: 3px;
+  color: green;
 }
 
 button {
   font-size: 30px;
 }
+
+.label {
+  margin-bottom: 2px;
+}
+
+#log {
+  border: 1px solid green;
+  padding: 3px;
+}
+

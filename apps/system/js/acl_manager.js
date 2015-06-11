@@ -108,6 +108,19 @@
     return app;
   };
 
+  ACLManager.prototype.getAppIcon = function(app) {
+    var smallestSize = null;
+    for (var size in app.manifest.icons) {
+      if (!smallestSize || size < smallestSize) {
+        smallestSize = size;
+      }
+    }
+    var iconURL = app.manifest.icons[smallestSize];
+    if (iconURL.startsWith('/')) {
+      iconURL = app.origin + iconURL;
+    }
+    return iconURL;
+  };
 
   ACLManager.prototype.handleMessage = function(msg) {
     debug('processing message', msg);
@@ -136,7 +149,7 @@
         break;
 
       case 'notify':
-        this.sendNotification(msg);
+        this.sendNotification(app, msg);
         break;
 
       case 'notify-remove':
@@ -164,15 +177,22 @@
     window.dispatchEvent(new CustomEvent('home'));
   };
 
-  ACLManager.prototype.sendNotification = function(detail) {
+  ACLManager.prototype.sendNotification = function(app, detail) {
     if (!detail.id) {
       debug('No id received with notification, cannot fire click callback');
       detail.id = getRandomString() + Date.now();
     }
 
-    // TODO: how can we do silent on 2.1?
-    var n = new Notification(detail.title, {
-      body: detail.body,
+    if (!detail.icon) {
+      detail.icon = this.getAppIcon(app);
+    }
+
+    if (detail.silent) {
+      detail.icon += '#silent=1';
+    }
+
+    var n = new Notification(detail.title || '', {
+      body: detail.body || '',
       icon: detail.icon,
       tag: NOTIFICATION_PREFIX + detail.id
     });
