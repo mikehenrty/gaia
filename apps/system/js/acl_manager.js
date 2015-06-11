@@ -1,4 +1,4 @@
-/* global dump, applications*/
+/* global dump, applications, AppWindowManager*/
 'use strict';
 
 (function(exports) {
@@ -144,8 +144,10 @@
         break;
 
       case 'minimize':
-        // TODO: make sure msg.origin is the running app
-        this.minimizeApp(app);
+        // Only minimize requested app if it is active.
+        if (AppWindowManager.getActiveApp().manifestURL === app.manifestURL) {
+          this.minimizeApp(app);
+        }
         break;
 
       case 'notify':
@@ -173,7 +175,6 @@
   };
 
   ACLManager.prototype.minimizeApp = function(app) {
-    // TODO: check that current foreground app is passed in app
     window.dispatchEvent(new CustomEvent('home'));
   };
 

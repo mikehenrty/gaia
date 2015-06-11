@@ -1,6 +1,8 @@
 'use strict';
 
 var PORT = 33334;
+var THIS_ORIGIN = 'app://acl-daemon.gaiamobile.org';
+var EMAIL_ORIGIN = 'app://email.gaiamobile.org';
 
 window.onerror = function(e) {
   document.write('Global ERROR: ' + e);
@@ -23,6 +25,8 @@ function App() {
 
   $('launch').onclick = this.launchApp.bind(this);
   $('minimize').onclick = this.minimizeApp.bind(this);
+  $('minimize-wrong').onclick = this.minimizeEmailApp.bind(this);
+  $('launch-minimize').onclick = this.launchAndMinimize.bind(this);
   $('notify').onclick = this.sendNotification.bind(this);
   $('notify-remove').onclick = this.removeNotifications.bind(this);
   $('notify-silent').onclick = this.silentNotification.bind(this);
@@ -100,7 +104,7 @@ App.prototype.launchApp = function() {
   this.log('Launching email');
   var msg = this.serializeMessage({
     'action': 'launch',
-    'origin': 'app://email.gaiamobile.org'
+    'origin': EMAIL_ORIGIN
   });
   this.socket.send(msg);
 };
@@ -116,7 +120,7 @@ App.prototype.sendNotification = function() {
   var msg = this.serializeMessage({
     'id': id,
     'action': 'notify',
-    'origin': 'app://email.gaiamobile.org',
+    'origin': EMAIL_ORIGIN,
     'title': 'This is a notification!',
     'body': (new Date()).toUTCString()
   });
@@ -131,7 +135,7 @@ App.prototype.removeNotifications = function() {
   var id = this.notifications.pop();
   var msg = this.serializeMessage({
     'id': id,
-    'origin': 'app://email.gaiamobile.org',
+    'origin': EMAIL_ORIGIN,
     'action': 'notify-remove'
   });
   this.socket.send(msg);
@@ -146,7 +150,7 @@ App.prototype.silentNotification = function() {
   this.notifications.push(id);
   var msg = this.serializeMessage({
     'id': id,
-    'origin': 'app://email.gaiamobile.org',
+    'origin': EMAIL_ORIGIN,
     'action': 'notify',
     'title': 'SHHHHHHH!!!',
     'silent': true
@@ -162,7 +166,34 @@ App.prototype.minimizeApp = function() {
   this.log('Minimizing current app');
   var msg = this.serializeMessage({
     'action': 'minimize',
-    'origin': 'app://acl-daemon.gaiamobile.org'
+    'origin': THIS_ORIGIN
+  });
+  this.socket.send(msg);
+};
+
+App.prototype.minimizeEmailApp = function() {
+  if (!this.socket) {
+    this.log('Cannot minimize, no connection');
+    return;
+  }
+  this.log('Attempting to minimize email, does nothing if email not running');
+  var msg = this.serializeMessage({
+    'action': 'minimize',
+    'origin': EMAIL_ORIGIN
+  });
+  this.socket.send(msg);
+};
+
+App.prototype.launchAndMinimize = function() {
+  if (!this.socket) {
+    this.log('Cannot launch app, no connection');
+    return;
+  }
+  setTimeout(this.minimizeEmailApp.bind(this), 2000);
+  this.log('Launching email, will minimize shortly');
+  var msg = this.serializeMessage({
+    'action': 'launch',
+    'origin': EMAIL_ORIGIN
   });
   this.socket.send(msg);
 };
