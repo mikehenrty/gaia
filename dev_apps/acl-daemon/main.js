@@ -30,6 +30,7 @@ function App() {
   $('notify').onclick = this.sendNotification.bind(this);
   $('notify-remove').onclick = this.removeNotifications.bind(this);
   $('notify-silent').onclick = this.silentNotification.bind(this);
+  $('remove-launch').onclick = this.removeLaunch.bind(this);
 }
 
 App.prototype.log = function(msg) {
@@ -83,8 +84,8 @@ App.prototype.handleMessage = function(msg) {
 
   switch (msg.action) {
     case 'notify-click':
-      this.log('Got click event');
-      alert('Got click for: ' + msg.id);
+      this.log('Got click event, remove then launch');
+      this.removeLaunch();
       break;
 
     default:
@@ -192,6 +193,25 @@ App.prototype.launchAndMinimize = function() {
   setTimeout(this.minimizeEmailApp.bind(this), 2000);
   this.log('Launching email, will minimize shortly');
   var msg = this.serializeMessage({
+    'action': 'launch',
+    'origin': EMAIL_ORIGIN
+  });
+  this.socket.send(msg);
+};
+
+App.prototype.removeLaunch = function() {
+  if (!this.socket) {
+    this.log('Cannot launch app, no connection');
+    return;
+  }
+  this.log('Sending remove and launch simultaneously');
+  var id = this.notifications.pop();
+  var msg = this.serializeMessage({
+    'id': id,
+    'origin': EMAIL_ORIGIN,
+    'action': 'notify-remove'
+  });
+  msg += this.serializeMessage({
     'action': 'launch',
     'origin': EMAIL_ORIGIN
   });
