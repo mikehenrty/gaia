@@ -24,6 +24,7 @@ function App() {
   this.notifications = [];
 
   $('launch').onclick = this.launchApp.bind(this);
+  $('kill').onclick = this.killApp.bind(this);
   $('minimize').onclick = this.minimizeApp.bind(this);
   $('minimize-wrong').onclick = this.minimizeEmailApp.bind(this);
   $('launch-minimize').onclick = this.launchAndMinimize.bind(this);
@@ -106,6 +107,19 @@ App.prototype.launchApp = function() {
   var msg = this.serializeMessage({
     'action': 'launch',
     'origin': EMAIL_ORIGIN
+  });
+  this.socket.send(msg);
+};
+
+App.prototype.killApp = function() {
+  if (!this.socket) {
+    this.log('Cannot kill app, no connection');
+    return;
+  }
+  this.log('Killing self');
+  var msg = this.serializeMessage({
+    'action': 'kill',
+    'origin': THIS_ORIGIN
   });
   this.socket.send(msg);
 };

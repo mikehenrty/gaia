@@ -30,22 +30,49 @@
     var req = navigator.mozSettings.createLock().get(SETTINGS_KEY);
     req.onsuccess = function() {
       if (req.result[SETTINGS_KEY] === true) {
-        debug('starting ACL');
-        this.attemptToConnect();
-        navigator.mozApps.mgmt.addEventListener('install', function(evt) {
-          var app = evt.application;
-          if (app && app.manifest && app.manifest.permissions &&
-              app.manifest.permissions['external-app']) {
-            debug('app install, attempting to connect');
-            this.attemptToConnect();
-          }
-        }.bind(this));
+        debug('ACL setting enabled, starting');
+        this.checkForExternalApps();
+        this.listenForExternalApps();
       } else {
         debug('ACL setting disabled');
       }
     }.bind(this);
+
     req.onerror = function(e) {
       debug('Unable to fecth acl settings', e);
+    };
+  };
+
+  ACLManager.prototype.isExternalApp = function(manifest) {
+    return manifest && manifest.permissions &&
+           manifest.permissions['external-app'];
+  };
+
+  ACLManager.prototype.listenForExternalApps = function() {
+    navigator.mozApps.mgmt.addEventListener('install', function(evt) {
+      var app = evt.application;
+      if (this.isExternalApp(app.manifest)) {
+        debug('external app installed, attempting to connect');
+        this.attemptToConnect();
+      }
+    }.bind(this));
+  };
+
+  ACLManager.prototype.checkForExternalApps = function() {
+    var req = navigator.mozApps.mgmt.getAll();
+    req.onsuccess = function() {
+      var apps = req.result;
+      var found = apps.some(function(app) {
+        return this.isExternalApp(app.manifest);
+      }.bind(this));
+      if (found) {
+        debug('External app already installed, attempting to connect');
+        this.attemptToConnect();
+      }
+    }.bind(this);
+
+    req.onerror = function(e) {
+      debug('Unable to fetch apps ', e);
     };
   };
 
@@ -84,8 +111,8 @@
     setTimeout(this.openConnection.bind(this), RETRY_TIMEOUT);
   };
 
-  ACLManager.prototype.handleOpen = function(evt) {
-    debug('CONNECTION OPEN ' + evt);
+  ACLManager.prototype.handleOpen = function() {
+    debug('CONNECTION SUCCESS!');
   };
 
   ACLManager.prototype.handleClose = function(evt) {
@@ -166,11 +193,12 @@
         this.launchApp(app);
         break;
 
+      case 'kill':
+        this.killApp(app);
+        break;
+
       case 'minimize':
-        // Only minimize requested app if it is active.
-        if (AppWindowManager.getActiveApp().manifestURL === app.manifestURL) {
-          this.minimizeApp(app);
-        }
+        this.minimizeApp(app);
         break;
 
       case 'notify':
@@ -197,8 +225,15 @@
     }));
   };
 
+  ACLManager.prototype.killApp = function(app) {
+    AppWindowManager.kill(app.origin, app.manifestURL);
+  };
+
   ACLManager.prototype.minimizeApp = function(app) {
-    window.dispatchEvent(new CustomEvent('home'));
+    // Only minimize requested app if it is active.
+    if (AppWindowManager.getActiveApp().manifestURL === app.manifestURL) {
+      window.dispatchEvent(new CustomEvent('home'));
+    }
   };
 
   ACLManager.prototype.sendNotification = function(app, detail) {
