@@ -226,7 +226,9 @@
   };
 
   ACLManager.prototype.killApp = function(app) {
-    AppWindowManager.kill(app.origin, app.manifestURL);
+    if (this.isExternalApp(app.manifest)) {
+      AppWindowManager.kill(app.origin, app.manifestURL);
+    }
   };
 
   ACLManager.prototype.minimizeApp = function(app) {
