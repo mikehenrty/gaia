@@ -2,14 +2,16 @@
 'use strict';
 
 (function(exports) {
+  var DEBUG = true;
   var HOST = '127.0.0.1';
   var PORT = 33334;
   var RETRY_TIMEOUT = 1000;
+  var POLL_TIMEOUT = 60000 * 5; // 5 minutes
   var SETTINGS_KEY = 'acl.enabled';
   var NOTIFICATION_PREFIX = 'ACL_NOTIFICATION';
 
-  function debug(msg) {
-    dump('[ACL] ' +
+  function debug() {
+    DEBUG && dump('[ACL] ' +
       Array.prototype.slice.call(arguments).join(', ') + '\n');
   }
 
@@ -18,6 +20,7 @@
   }
 
   var ACLManager = function() {
+    this.pollStartedAt = null;
     this.socket = null;
     this.buffer = '';
     this.notifications = [];
@@ -28,7 +31,15 @@
     req.onsuccess = function() {
       if (req.result[SETTINGS_KEY] === true) {
         debug('starting ACL');
-        this.openConnection();
+        this.attemptToConnect();
+        navigator.mozApps.mgmt.addEventListener('install', function(evt) {
+          var app = evt.application;
+          if (app && app.manifest && app.manifest.permissions &&
+              app.manifest.permissions['external-app']) {
+            debug('app install, attempting to connect');
+            this.attemptToConnect();
+          }
+        }.bind(this));
       } else {
         debug('ACL setting disabled');
       }
@@ -38,9 +49,21 @@
     };
   };
 
+  ACLManager.prototype.attemptToConnect = function() {
+    debug('Starting acl connection attempt');
+    this.pollStartedAt = Date.now();
+    this.openConnection();
+  };
+
   ACLManager.prototype.openConnection = function() {
     if (this.socket) {
       debug('Cannot connect, already have socket');
+      return;
+    }
+
+    // Check for polling timeout.
+    if (Date.now() - this.pollStartedAt > POLL_TIMEOUT) {
+      debug('Poll timeout reached, giving up');
       return;
     }
 
