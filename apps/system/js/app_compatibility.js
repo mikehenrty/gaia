@@ -2,7 +2,7 @@
 'use strict';
 
 (function(exports) {
-  var DEBUG = true;
+  var DEBUG = false;
   var HOST = '127.0.0.1';
   var PORT = 33334;
   var RETRY_TIMEOUT = 1000;
@@ -19,20 +19,20 @@
     return Math.random().toString(36).replace(/[^a-z]+/g, '');
   }
 
-  var ACLManager = function() {
-    this.pollStartedAt = null;
+  var AppCompatibility = function() {
+    this.connectionAttempts = 0;
     this.socket = null;
     this.buffer = '';
     this.notifications = [];
   };
 
-  ACLManager.prototype.start = function() {
+  AppCompatibility.prototype.start = function() {
+    this.listenForExternalApps();
     var req = navigator.mozSettings.createLock().get(SETTINGS_KEY);
     req.onsuccess = function() {
       if (req.result[SETTINGS_KEY] === true) {
         debug('ACL setting enabled, starting');
         this.checkForExternalApps();
-        this.listenForExternalApps();
       } else {
         debug('ACL setting disabled');
       }
@@ -43,14 +43,14 @@
     };
   };
 
-  ACLManager.prototype.isExternalApp = function(manifest) {
+  AppCompatibility.prototype.isExternalApp = function(manifest) {
     return manifest && manifest.permissions &&
            manifest.permissions['external-app'];
   };
 
-  ACLManager.prototype.listenForExternalApps = function() {
-    navigator.mozApps.mgmt.addEventListener('install', function(evt) {
-      var app = evt.application;
+  AppCompatibility.prototype.listenForExternalApps = function() {
+    window.addEventListener('applicationinstall', function(evt) {
+      var app = evt.detail.application;
       if (this.isExternalApp(app.manifest)) {
         debug('external app installed, attempting to connect');
         this.attemptToConnect();
@@ -58,11 +58,13 @@
     }.bind(this));
   };
 
-  ACLManager.prototype.checkForExternalApps = function() {
+  AppCompatibility.prototype.checkForExternalApps = function() {
     var req = navigator.mozApps.mgmt.getAll();
     req.onsuccess = function() {
       var apps = req.result;
+      var lastApp = null;
       var found = apps.some(function(app) {
+        lastApp = app;
         return this.isExternalApp(app.manifest);
       }.bind(this));
       if (found) {
@@ -76,20 +78,21 @@
     };
   };
 
-  ACLManager.prototype.attemptToConnect = function() {
+  AppCompatibility.prototype.attemptToConnect = function() {
     debug('Starting acl connection attempt');
-    this.pollStartedAt = Date.now();
+    this.connectionAttempts = 0;
     this.openConnection();
   };
 
-  ACLManager.prototype.openConnection = function() {
+  AppCompatibility.prototype.openConnection = function() {
     if (this.socket) {
       debug('Cannot connect, already have socket');
       return;
     }
 
     // Check for polling timeout.
-    if (Date.now() - this.pollStartedAt > POLL_TIMEOUT) {
+    this.connectionAttempts++;
+    if (this.connectionAttempts > POLL_TIMEOUT / RETRY_TIMEOUT) {
       debug('Poll timeout reached, giving up');
       return;
     }
@@ -105,23 +108,23 @@
     }
   };
 
-  ACLManager.prototype.handleSocketError = function(e) {
+  AppCompatibility.prototype.handleSocketError = function(e) {
     debug('Error connecting: ' + JSON.stringify(e));
     this.socket = null;
     setTimeout(this.openConnection.bind(this), RETRY_TIMEOUT);
   };
 
-  ACLManager.prototype.handleOpen = function() {
+  AppCompatibility.prototype.handleOpen = function() {
     debug('CONNECTION SUCCESS!');
   };
 
-  ACLManager.prototype.handleClose = function(evt) {
+  AppCompatibility.prototype.handleClose = function(evt) {
     debug('Closed connections: ' + evt.type);
     this.socket = null;
     setTimeout(this.openConnection.bind(this), RETRY_TIMEOUT);
   };
 
-  ACLManager.prototype.handleData = function(evt) {
+  AppCompatibility.prototype.handleData = function(evt) {
     var data = evt.data;
     this.buffer += data;
     var i = this.buffer.indexOf('\n');
@@ -133,18 +136,18 @@
     }
   };
 
-  ACLManager.prototype.serializeMessage = function(obj) {
+  AppCompatibility.prototype.serializeMessage = function(obj) {
     return JSON.stringify(obj) + '\n';
   };
 
-  ACLManager.prototype.sendMessage = function(msg) {
+  AppCompatibility.prototype.sendMessage = function(msg) {
     if (!this.socket) {
       debug('Cannot send message, no connection', msg);
     }
     this.socket.send(this.serializeMessage(msg));
   };
 
-  ACLManager.prototype.getAppFromMessage = function(msg) {
+  AppCompatibility.prototype.getAppFromMessage = function(msg) {
     var app = null;
     if (msg.manifestURL) {
       app = applications.getByManifestURL(msg.manifestURL);
@@ -158,7 +161,7 @@
     return app;
   };
 
-  ACLManager.prototype.getAppIcon = function(app) {
+  AppCompatibility.prototype.getAppIcon = function(app) {
     var smallestSize = null;
     for (var size in app.manifest.icons) {
       if (!smallestSize || size < smallestSize) {
@@ -172,7 +175,7 @@
     return iconURL;
   };
 
-  ACLManager.prototype.handleMessage = function(msg) {
+  AppCompatibility.prototype.handleMessage = function(msg) {
     debug('processing message', msg);
 
     try {
@@ -215,7 +218,7 @@
     }
   };
 
-  ACLManager.prototype.launchApp = function(app) {
+  AppCompatibility.prototype.launchApp = function(app) {
     window.dispatchEvent(new CustomEvent('webapps-launch', {
       detail: {
         manifestURL: app.manifestURL,
@@ -225,20 +228,20 @@
     }));
   };
 
-  ACLManager.prototype.killApp = function(app) {
+  AppCompatibility.prototype.killApp = function(app) {
     if (this.isExternalApp(app.manifest)) {
       AppWindowManager.kill(app.origin, app.manifestURL);
     }
   };
 
-  ACLManager.prototype.minimizeApp = function(app) {
+  AppCompatibility.prototype.minimizeApp = function(app) {
     // Only minimize requested app if it is active.
     if (AppWindowManager.getActiveApp().manifestURL === app.manifestURL) {
       window.dispatchEvent(new CustomEvent('home'));
     }
   };
 
-  ACLManager.prototype.sendNotification = function(app, detail) {
+  AppCompatibility.prototype.sendNotification = function(app, detail) {
     if (!detail.id) {
       debug('No id received with notification, cannot fire click callback');
       detail.id = getRandomString() + Date.now();
@@ -269,7 +272,7 @@
     this.notifications[detail.id] = n;
   };
 
-  ACLManager.prototype.removeNotification = function(id) {
+  AppCompatibility.prototype.removeNotification = function(id) {
     if (!id || !this.notifications[id]) {
       debug('Unable to find notification for removal', id);
     } else {
@@ -278,6 +281,6 @@
     }
   };
 
-  exports.aclManager = new ACLManager();
-  exports.aclManager.start();
+  exports.appCompatibility = new AppCompatibility();
+  exports.appCompatibility.start();
 }(window));
